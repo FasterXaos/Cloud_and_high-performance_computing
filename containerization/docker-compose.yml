@@ -1,0 +1,41 @@
+services:
+  db:
+    build: ./database
+    image: xarcanoid-db:local
+    environment:
+      POSTGRES_USER: xarcanoid
+      POSTGRES_PASSWORD: xarcanoid
+      POSTGRES_DB: xarcanoid
+    volumes:
+      - score-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U xarcanoid -d xarcanoid"]
+      interval: 2s
+      timeout: 3s
+      retries: 20
+      start_period: 5s
+    networks:
+      - xarcanoid-net
+    restart: unless-stopped
+
+  entrypoint:
+    build: ./entrypoint
+    image: xarcanoid-entrypoint:local
+    environment:
+      DATABASE_URL: postgresql://xarcanoid:xarcanoid@db:5432/xarcanoid
+      PORT: "8080"
+    ports:
+      - "8080:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - xarcanoid-net
+    restart: unless-stopped
+
+volumes:
+  score-data:
+
+networks:
+  xarcanoid-net:
+    driver: bridge

@@ -6,4 +6,6 @@ Browser [Arkanoid](https://github.com/FasterXaos/XArcanoid) with registration, s
 
 ## Fundamentals of containerization
 
-\# TODO  
+Two containers on one Docker network: a PostgreSQL leaderboard for XArcanoid and an HTTP entry point. Runs live in a named volume and stay after the containers are restarted or recreated.
+
+See [containerization/README.md](containerization/README.md).
