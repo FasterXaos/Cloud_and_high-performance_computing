@@ -54,32 +54,49 @@ kubectl get pods,svc -w
 
 ## Проверка
 
-Адрес снаружи. Docker Desktop обычно даёт `localhost`. Иначе возьмите IP ноды:
+Все команды ниже вводятся в том же терминале, из папки `kubernetes`, после того как `kubectl get pods` показывает четыре Ready. На Windows вместо `curl` пишите `curl.exe`.
+
+**1. Посмотреть сервисы.** Нужно увидеть `frontend` типа LoadBalancer и `backend` типа ClusterIP.
 
 ```bash
-kubectl get svc frontend
+kubectl get svc
 ```
+
+У `frontend` колонка `PORT(S)` выглядит как `80:30080/TCP`. Это внешний порт `30080` на машине. `EXTERNAL-IP` у kind часто `<pending>` — тогда ходите на `http://127.0.0.1:30080`. Если там уже есть адрес (Docker Desktop часто даёт `localhost`), можно открывать `http://<этот-адрес>/`.
+
+**2. Проверить, что точка входа жива.** Это ответ самого frontend, без backend.
 
 ```bash
-curl http://127.0.0.1:30080/
-curl http://127.0.0.1:30080/health
+curl.exe -sS http://127.0.0.1:30080/health
 ```
 
-На Windows PowerShell: `curl.exe`.
+Ожидается: `{"service":"frontend","status":"ok"}`.
 
-Повторите `GET /` несколько раз. В JSON поле `replica` — имя пода backend. При трёх репликах имена чередуются. Заголовок `X-Forwarded-By: frontend` показывает, что ответ пришёл через точку входа.
+**3. Запросить данные через frontend.** Запрос идёт с хоста на frontend, frontend пересылает его backend.
 
-Прямой доступ к backend снаружи закрыт:
+```bash
+curl.exe -sS -D - http://127.0.0.1:30080/
+```
+
+Ожидается заголовок `X-Forwarded-By: frontend` и JSON вида `{"message":"request received","replica":"backend-...","service":"backend"}`. Поле `replica` — имя пода, который ответил.
+
+**4. Повторить шаг 3 ещё четыре-пять раз.** Имена в `replica` должны меняться между тремя подами backend. Так видно, что запросы распределяются по репликам.
+
+**5. Убедиться, что backend снаружи не опубликован.**
 
 ```bash
 kubectl get svc backend
 ```
 
-У него только ClusterIP. Запрос из кластера:
+Тип только `ClusterIP`, внешнего порта нет. С хоста `http://127.0.0.1:8080` к этому backend не относится.
+
+**6. Сходить в backend изнутри кластера.** Команда выполняется в поде frontend и бьёт во внутреннее имя сервиса `backend`.
 
 ```bash
 kubectl exec deploy/frontend -- python -c "import urllib.request; print(urllib.request.urlopen('http://backend:8080/').read().decode())"
 ```
+
+Ожидается тот же JSON backend с полем `replica`. Это и есть путь, которым frontend ходит в обычном режиме.
 
 ## Остановка
 
