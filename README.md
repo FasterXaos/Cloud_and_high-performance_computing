@@ -15,3 +15,9 @@ See [containerization/README.md](containerization/README.md).
 A replicated backend behind a frontend that is reachable from outside the cluster.
 
 See [kubernetes/README.md](kubernetes/README.md).
+
+## Microservices
+
+High-level design of XArcanoid Online: services, traffic and data estimates, and the patterns between them.
+
+See [msa/README.md](msa/README.md).
