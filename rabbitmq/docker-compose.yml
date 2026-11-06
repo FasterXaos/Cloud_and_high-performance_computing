@@ -1,0 +1,31 @@
+services:
+  rabbitmq:
+    image: rabbitmq:3.13-management-alpine
+    ports:
+      - "15672:15672"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 10s
+
+  producer:
+    build: ./producer
+    environment:
+      RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672/
+      INTERVAL: "2"
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    restart: unless-stopped
+
+  consumer:
+    build: ./consumer
+    environment:
+      RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672/
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    restart: unless-stopped

@@ -21,3 +21,9 @@ See [kubernetes/README.md](kubernetes/README.md).
 High-level design of XArcanoid Online: services, traffic and data estimates, and the patterns between them.
 
 See [msa/README.md](msa/README.md).
+
+## RabbitMQ
+
+A producer publishes calculation tasks through a topic exchange. A consumer writes the result to its log and dead-letters failed operations.
+
+See [rabbitmq/README.md](rabbitmq/README.md).
